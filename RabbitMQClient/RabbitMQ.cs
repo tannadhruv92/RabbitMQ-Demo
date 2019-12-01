@@ -15,11 +15,12 @@ namespace RabbitMQClient
         public object channel;
         public RabbitMQ(string virtualHost = null)
         {
-            ConnectionFactory factory = new ConnectionFactory();
-            factory.UserName = "guest";
-            factory.Password = "guest";
-            factory.VirtualHost = virtualHost ?? "/";
-            factory.HostName = "localhost";            
+            ConnectionFactory factory = new ConnectionFactory
+            {
+                UserName = ConnectionFactory.DefaultUser,
+                Password = ConnectionFactory.DefaultPass,
+                VirtualHost = ConnectionFactory.DefaultVHost
+            };
             connection = factory.CreateConnection();           
         }
 
@@ -33,12 +34,12 @@ namespace RabbitMQClient
         /// </summary>
         /// <param name="queueName"></param>
         /// <param name="message"></param>  
-        public void SendMessage(string queueName, string message)
+        public void SendMessage(string queueName, string message, string messageTTL = "")
         {
             if (connection.CloseReason != null || connection == null)
                 throw new NullReferenceException("Connection is null");
 
-            using (var channel = connection.CreateModel())
+            using (IModel channel = connection.CreateModel())
             {
                 channel.QueueDeclare(queue: queueName,
                                      durable: true,
@@ -50,6 +51,11 @@ namespace RabbitMQClient
 
                 var _basicProperties = channel.CreateBasicProperties();
                 _basicProperties.Persistent = true;
+
+                if (!string.IsNullOrEmpty(messageTTL))
+                {
+                    _basicProperties.Expiration = messageTTL;
+                }
 
                 channel.BasicPublish(exchange: "",
                                      routingKey: queueName,
@@ -261,5 +267,31 @@ namespace RabbitMQClient
             _channel.BasicAck(deliveryTag, false);
         }
 
+        public void ConsumeEvents(Action<string> queueEventHandler)
+        {
+            IModel _channel = GetChannel(channel);
+
+            string queue = _channel.QueueDeclare().QueueName;
+
+            _channel.QueueBind(queue, "amq.rabbitmq.event", "queue.deleted");
+
+            RabbitMQEvents mQEvents = new RabbitMQEvents();
+
+            mQEvents.QeueuEvent += (q)  => {
+                queueEventHandler.Invoke(q);
+            };
+
+            mQEvents.ConsumeRabbitMQEvents(_channel, queue);
+        }
+
+        public void StartExcusiveConsuming(string queueName)
+        {
+            IModel _channel = GetChannel(channel);
+            _channel.QueueDeclare(queue: queueName);
+            var consumer = new EventingBasicConsumer(_channel);
+            _channel.BasicConsume(queue: queueName,
+                                     autoAck: false,
+                                     consumer: consumer);
+        }
     }
 }

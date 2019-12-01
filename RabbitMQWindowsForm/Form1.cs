@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -41,11 +42,11 @@ namespace RabbitMQWindowsForm
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            rabbitMQ = new RabbitMQ();
-            rabbitMQ.OnConnectionBlocked(onConnectionBlcked);
-            rabbitMQ.OnConnectionShutDown(onConnectionBlcked);
-            rabbitMQ.channel = rabbitMQ.GetChannel();
-            rabbitMQ.ReciveMessage("Dhruv", rabbitMQ.channel, OnMessageRecived);
+            //rabbitMQ = new RabbitMQ();
+            //rabbitMQ.OnConnectionBlocked(onConnectionBlcked);
+            //rabbitMQ.OnConnectionShutDown(onConnectionBlcked);
+            //rabbitMQ.channel = rabbitMQ.GetChannel();
+            //rabbitMQ.ReciveMessage("Dhruv", rabbitMQ.channel, OnMessageRecived);
         }
 
         private static void onConnectionBlcked(object arg1, object arg2)
@@ -74,5 +75,17 @@ namespace RabbitMQWindowsForm
         private void Button1_Click(object sender, EventArgs e) => MessageBox.Show(WithoutRefresh.ToString());
 
         private void Button2_Click(object sender, EventArgs e) => MessageBox.Show(WithRefresh.ToString());
+
+        private void Button3_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < 40; i++)
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = @"D:\Projects\RabbitMQDemo\RabbitMQRecieve\bin\Debug\RabbitMQRecieve.exe",
+
+                }); 
+            }
+        }
     }
 }

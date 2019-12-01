@@ -15,10 +15,21 @@ namespace RabbitMQSend
         static CancellationTokenSource source;
         static RabbitMQ mQ;
         static int counter;
-        static int queueCounter;
+        static int queueCounter = 1;
+        private static object lockObject = new object();
         static void Main(string[] args)
         {
-            SendMessage();
+            mQ = new RabbitMQ();
+
+            mQ.ConsumeEvents(OnQueueEventRecevied);
+        }
+
+        private static void OnQueueEventRecevied(string obj)
+        {
+            lock (lockObject)
+            {
+                Console.WriteLine($"{queueCounter++} Queue Deleted : {obj}"); 
+            }
         }
 
         private static void BackUpDemo()
@@ -42,12 +53,12 @@ namespace RabbitMQSend
 
         private static void ReceiveMessageFromVHost(Name name)
         {
-            mQ?.Dispose();
-            counter = 0;
-            queueCounter = name.messages_ready;
-            mQ = new RabbitMQ(name.vhost);
-            object channel = mQ.GetChannel();
-            mQ.ReciveMessage(name.name, channel, onMessageReceived);
+            //mQ?.Dispose();
+            //counter = 0;
+            //queueCounter = name.messages_ready;
+            //mQ = new RabbitMQ(name.vhost);
+            //object channel = mQ.GetChannel();
+            //mQ.ReciveMessage(name.name, channel, onMessageReceived);
         }
 
         private static void onMessageReceived(string arg1, ulong arg2)
@@ -66,18 +77,18 @@ namespace RabbitMQSend
             }
         }
 
-        private static void SendMessage()
-        {
-            RabbitMQ mQ = new RabbitMQ("MTL278");
+        //private static void SendMessage()
+        //{
+        //    RabbitMQ mQ = new RabbitMQ("MTL278");
 
-            for (int i = 0; i < 2; i++)
-            {
-                mQ.SendMessage("Tanna", "Hi There");
-            }
+        //    for (int i = 0; i < 2; i++)
+        //    {
+        //        mQ.SendMessage("Tanna", "Hi There");
+        //    }
 
-            Console.WriteLine("Done");
-            Console.ReadKey();
-            Environment.Exit(0);
-        }
+        //    Console.WriteLine("Done");
+        //    Console.ReadKey();
+        //    Environment.Exit(0);
+        //}
     }
 }
